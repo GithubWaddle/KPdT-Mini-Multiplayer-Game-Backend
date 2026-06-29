@@ -53,7 +53,7 @@ class RankingService
         // Individual rank — check Redis sorted set first
         $cachedRank = Redis::zscore('ranking:scores', $userId);
 
-        if ($cachedRank !== null) {
+        if ($cachedRank !== null && $cachedRank !== false) { // ← safe for phpredis
             // zrevrank gives position (0-indexed), +1 to make it 1-indexed
             $position = Redis::zrevrank('ranking:scores', $userId);
 
