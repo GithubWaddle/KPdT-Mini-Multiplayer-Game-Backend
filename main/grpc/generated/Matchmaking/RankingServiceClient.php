@@ -4,7 +4,6 @@
 namespace Matchmaking;
 
 /**
- * What matchmaking can ask ranking service to do
  */
 class RankingServiceClient extends \Grpc\BaseStub {
 

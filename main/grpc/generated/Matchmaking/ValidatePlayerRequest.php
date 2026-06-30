@@ -9,9 +9,11 @@ use Google\Protobuf\Internal\RepeatedField;
 use Google\Protobuf\Internal\GPBUtil;
 
 /**
- * Generated from protobuf message <code>matchmaking.GetPlayerRankRequest</code>
+ * NEW messages
+ *
+ * Generated from protobuf message <code>matchmaking.ValidatePlayerRequest</code>
  */
-class GetPlayerRankRequest extends \Google\Protobuf\Internal\Message
+class ValidatePlayerRequest extends \Google\Protobuf\Internal\Message
 {
     /**
      * Generated from protobuf field <code>int32 user_id = 1;</code>
