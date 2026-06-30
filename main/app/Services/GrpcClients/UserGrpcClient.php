@@ -12,7 +12,7 @@ class UserGrpcClient
     public function __construct()
     {
         $this->client = new UserServiceClient(
-            'app:50052', // different port from ranking's 50051
+            'grpc_user:50052', // different port from ranking's 50051
             ['credentials' => \Grpc\ChannelCredentials::createInsecure()]
         );
     }

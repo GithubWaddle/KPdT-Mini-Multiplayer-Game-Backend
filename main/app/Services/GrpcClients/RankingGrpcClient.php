@@ -15,7 +15,7 @@ class RankingGrpcClient
         // ranking_service = docker-compose service name
         // 50051 = standard gRPC port
         $this->client = new RankingServiceClient(
-            'ranking_service:50051',
+            'grpc_ranking:50051',
             ['credentials' => \Grpc\ChannelCredentials::createInsecure()]
         );
     }
