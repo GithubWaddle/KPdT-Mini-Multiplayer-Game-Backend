@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package matchmaking;
+
+// What matchmaking can ask ranking service to do
+service RankingService {
+    rpc UpdateRanking (UpdateRankingRequest) returns (UpdateRankingResponse);
+    rpc GetPlayerRank (GetPlayerRankRequest) returns (GetPlayerRankResponse);
+}
+
+message UpdateRankingRequest {
+    int32 winner_id = 1;
+    int32 loser_id  = 2;
+    int32 match_id  = 3;
+}
+
+message UpdateRankingResponse {
+    bool   success       = 1;
+    string message       = 2;
+    int32  winner_points = 3;
+    int32  loser_points  = 4;
+}
+
+message GetPlayerRankRequest {
+    int32 user_id = 1;
+}
+
+message GetPlayerRankResponse {
+    int32  user_id  = 1;
+    int32  rank     = 2;
+    int32  points   = 3;
+    int32  wins     = 4;
+    int32  losses   = 5;
+    float  win_rate = 6;
+}
