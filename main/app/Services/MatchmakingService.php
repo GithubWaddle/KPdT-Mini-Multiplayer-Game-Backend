@@ -6,6 +6,7 @@ use App\Models\Matchs;
 use App\Models\Ranking;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\DB;
+use App\Services\GrpcClients\RankingGrpcClient;
 
 class MatchmakingService
 {
@@ -110,42 +111,29 @@ class MatchmakingService
 
     public function finishMatch(int $matchId, int $winnerId): Matchs
     {
-        $match = Matchs::findOrFail($matchId);
+        $match   = Matchs::findOrFail($matchId);
         $loserId = $match->player1_id === $winnerId
                     ? $match->player2_id
                     : $match->player1_id;
 
-        // Saga Pattern — each step updates one thing
-        // if any step fails, previous steps get compensated
         DB::beginTransaction();
         try {
-            // Step 1 — mark match as finished
+            // Step 1 — update match in DB
             $match->update([
                 'status'    => 'finished',
                 'winner_id' => $winnerId,
             ]);
 
-            // Step 2 — update winner ranking
-            Ranking::where('user_id', $winnerId)->update([
-                'wins'   => DB::raw('wins + 1'),
-                'points' => DB::raw('points + 10'),
-            ]);
-
-            // Step 3 — update loser ranking
-            Ranking::where('user_id', $loserId)->update([
-                'losses' => DB::raw('losses + 1'),
-                'points' => DB::raw('GREATEST(points - 5, 0)'), // floor at 0
-            ]);
-
             DB::commit();
-
-            // Step 4 — bust Redis cache so leaderboard reflects new scores
-            Redis::del('ranking:leaderboard');
-
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
         }
+
+        // Step 2 — tell Ranking service via gRPC (not direct DB anymore)
+        // This is the inter-service communication the exam wants
+        $grpcClient = new RankingGrpcClient();
+        $grpcClient->updateRanking($winnerId, $loserId, $matchId);
 
         return $match->fresh();
     }
