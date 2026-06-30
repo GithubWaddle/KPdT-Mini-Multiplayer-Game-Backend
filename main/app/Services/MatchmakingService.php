@@ -3,10 +3,10 @@
 namespace App\Services;
 
 use App\Models\Matchs;
-use App\Models\Ranking;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\DB;
 use App\Services\GrpcClients\RankingGrpcClient;
+use App\Services\GrpcClients\UserGrpcClient;
 
 class MatchmakingService
 {
@@ -15,6 +15,15 @@ class MatchmakingService
 
     public function joinQueue(int $userId): array
     {
+
+        // NEW — validate player exists via gRPC before doing anything
+        $userGrpc = new UserGrpcClient();
+        $playerInfo = $userGrpc->validatePlayer($userId);
+
+        if (!$playerInfo['exists']) {
+            throw new \Exception('Player does not exist');
+        }
+
         // Check if player is already in an ongoing match
         $existingMatch = Matchs::where('status', 'ongoing')
                               ->where(function ($q) use ($userId) {
