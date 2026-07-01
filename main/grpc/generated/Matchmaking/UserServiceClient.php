@@ -4,7 +4,6 @@
 namespace Matchmaking;
 
 /**
- * NEW — User service contract
  */
 class UserServiceClient extends \Grpc\BaseStub {
 
@@ -28,6 +27,34 @@ class UserServiceClient extends \Grpc\BaseStub {
         return $this->_simpleRequest('/matchmaking.UserService/ValidatePlayer',
         $argument,
         ['\Matchmaking\ValidatePlayerResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * @param \Matchmaking\UpdateUserScoreRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall<\Matchmaking\UpdateUserScoreResponse>
+     */
+    public function UpdateUserScore(\Matchmaking\UpdateUserScoreRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/matchmaking.UserService/UpdateUserScore',
+        $argument,
+        ['\Matchmaking\UpdateUserScoreResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * @param \Matchmaking\CompensateUserScoreRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall<\Matchmaking\CompensateUserScoreResponse>
+     */
+    public function CompensateUserScore(\Matchmaking\CompensateUserScoreRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/matchmaking.UserService/CompensateUserScore',
+        $argument,
+        ['\Matchmaking\CompensateUserScoreResponse', 'decode'],
         $metadata, $options);
     }
 

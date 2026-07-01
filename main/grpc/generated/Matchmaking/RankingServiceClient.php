@@ -44,4 +44,18 @@ class RankingServiceClient extends \Grpc\BaseStub {
         $metadata, $options);
     }
 
+    /**
+     * @param \Matchmaking\CompensateRankingRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall<\Matchmaking\CompensateRankingResponse>
+     */
+    public function CompensateRanking(\Matchmaking\CompensateRankingRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/matchmaking.RankingService/CompensateRanking',
+        $argument,
+        ['\Matchmaking\CompensateRankingResponse', 'decode'],
+        $metadata, $options);
+    }
+
 }

@@ -9,14 +9,20 @@ use Google\Protobuf\Internal\RepeatedField;
 use Google\Protobuf\Internal\GPBUtil;
 
 /**
- * Generated from protobuf message <code>matchmaking.ValidatePlayerRequest</code>
+ * NEW — undo score update
+ *
+ * Generated from protobuf message <code>matchmaking.CompensateUserScoreRequest</code>
  */
-class ValidatePlayerRequest extends \Google\Protobuf\Internal\Message
+class CompensateUserScoreRequest extends \Google\Protobuf\Internal\Message
 {
     /**
      * Generated from protobuf field <code>int32 user_id = 1;</code>
      */
     protected $user_id = 0;
+    /**
+     * Generated from protobuf field <code>int32 prev_score = 2;</code>
+     */
+    protected $prev_score = 0;
 
     /**
      * Constructor.
@@ -25,6 +31,7 @@ class ValidatePlayerRequest extends \Google\Protobuf\Internal\Message
      *     Optional. Data for populating the Message object.
      *
      *     @type int $user_id
+     *     @type int $prev_score
      * }
      */
     public function __construct($data = NULL) {
@@ -50,6 +57,28 @@ class ValidatePlayerRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkInt32($var);
         $this->user_id = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>int32 prev_score = 2;</code>
+     * @return int
+     */
+    public function getPrevScore()
+    {
+        return $this->prev_score;
+    }
+
+    /**
+     * Generated from protobuf field <code>int32 prev_score = 2;</code>
+     * @param int $var
+     * @return $this
+     */
+    public function setPrevScore($var)
+    {
+        GPBUtil::checkInt32($var);
+        $this->prev_score = $var;
 
         return $this;
     }

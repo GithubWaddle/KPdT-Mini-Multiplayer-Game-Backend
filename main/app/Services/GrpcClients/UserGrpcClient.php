@@ -4,6 +4,8 @@ namespace App\Services\GrpcClients;
 
 use Matchmaking\UserServiceClient;
 use Matchmaking\ValidatePlayerRequest;
+use Matchmaking\UpdateUserScoreRequest;    // NEW
+use Matchmaking\CompensateUserScoreRequest; // NEW
 
 class UserGrpcClient
 {
@@ -33,5 +35,38 @@ class UserGrpcClient
             'name'   => $response->getName(),
             'score'  => $response->getScore(),
         ];
+    }
+
+    // NEW
+    public function updateUserScore(int $userId, int $newScore): array
+    {
+        $request = new UpdateUserScoreRequest();
+        $request->setUserId($userId);
+        $request->setNewScore($newScore);
+
+        [$response, $status] = $this->client->UpdateUserScore($request)->wait();
+
+        if ($status->code !== \Grpc\STATUS_OK) {
+            throw new \Exception('gRPC UpdateUserScore failed: ' . $status->details);
+        }
+
+        return [
+            'success'    => $response->getSuccess(),
+            'prev_score' => $response->getPrevScore(),
+        ];
+    }
+
+    // NEW
+    public function compensateUserScore(int $userId, int $prevScore): void
+    {
+        $request = new CompensateUserScoreRequest();
+        $request->setUserId($userId);
+        $request->setPrevScore($prevScore);
+
+        [$response, $status] = $this->client->CompensateUserScore($request)->wait();
+
+        if ($status->code !== \Grpc\STATUS_OK) {
+            throw new \Exception('gRPC CompensateUserScore failed: ' . $status->details);
+        }
     }
 }

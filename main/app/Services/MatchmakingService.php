@@ -118,31 +118,86 @@ class MatchmakingService
         ];
     }
 
-    public function finishMatch(int $matchId, int $winnerId): Matchs
+    public function finishMatch(int $matchId, int $winnerId): Match
     {
-        $match   = Matchs::findOrFail($matchId);
+        $match   = Match::findOrFail($matchId);
         $loserId = $match->player1_id === $winnerId
-                    ? $match->player2_id
-                    : $match->player1_id;
+                   ? $match->player2_id
+                   : $match->player1_id;
 
+        $rankingClient = new RankingGrpcClient();
+        $userClient    = new UserGrpcClient();
+
+        // Track what succeeded so we can compensate on failure
+        $rankingUpdated  = false;
+        $rankingSnapshot = [];  // store old values for compensation
+        $scoreUpdated    = false;
+        $prevScore       = 0;
+
+        // ── Saga Step 1: Update match status (PHP → own DB) ──
         DB::beginTransaction();
         try {
-            // Step 1 — update match in DB
-            $match->update([
-                'status'    => 'finished',
-                'winner_id' => $winnerId,
-            ]);
-
+            $match->update(['status' => 'finished', 'winner_id' => $winnerId]);
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            throw $e;
+            // Step 1 failed before anything else ran, just throw
+            throw new \Exception('Saga Step 1 failed (match update): ' . $e->getMessage());
         }
 
-        // Step 2 — tell Ranking service via gRPC (not direct DB anymore)
-        // This is the inter-service communication the exam wants
-        $grpcClient = new RankingGrpcClient();
-        $grpcClient->updateRanking($winnerId, $loserId, $matchId);
+        // ── Saga Step 2: Update ranking (PHP → gRPC → Node DB) ──
+        try {
+            // Snapshot current values BEFORE updating so we can restore if needed
+            $currentRank     = $rankingClient->getPlayerRank($winnerId);
+            $rankingSnapshot = [
+                'winner_points' => $currentRank['points'],
+                'loser_points'  => $rankingClient->getPlayerRank($loserId)['points'],
+            ];
+
+            $rankingResult  = $rankingClient->updateRanking($winnerId, $loserId, $matchId);
+            $rankingUpdated = true;
+
+        } catch (\Exception $e) {
+            // Step 2 failed — compensate Step 1 (revert match status)
+            DB::beginTransaction();
+            try {
+                $match->update(['status' => 'ongoing', 'winner_id' => null]);
+                DB::commit();
+            } catch (\Exception $compensateEx) {
+                DB::rollBack();
+            }
+            throw new \Exception('Saga Step 2 failed (ranking update): ' . $e->getMessage());
+        }
+
+        // ── Saga Step 3: Update user score (PHP → gRPC → Node DB) ──
+        try {
+            $newScore    = $rankingResult['winner_points'];
+            $scoreResult = $userClient->updateUserScore($winnerId, $newScore);
+            $prevScore   = $scoreResult['prev_score'];
+            $scoreUpdated = true;
+
+        } catch (\Exception $e) {
+            // Step 3 failed — compensate Step 2 (undo ranking)
+            if ($rankingUpdated) {
+                $rankingClient->compensateRanking(
+                    $winnerId,
+                    $loserId,
+                    $rankingSnapshot['winner_points'],
+                    $rankingSnapshot['loser_points']
+                );
+            }
+
+            // Compensate Step 1 (revert match status)
+            DB::beginTransaction();
+            try {
+                $match->update(['status' => 'ongoing', 'winner_id' => null]);
+                DB::commit();
+            } catch (\Exception $compensateEx) {
+                DB::rollBack();
+            }
+
+	    throw new \Exception('Saga Step 3 failed (score update): ' . $e->getMessage());
+	}
 
         return $match->fresh();
     }

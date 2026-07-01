@@ -9,11 +9,11 @@ use Google\Protobuf\Internal\RepeatedField;
 use Google\Protobuf\Internal\GPBUtil;
 
 /**
- * existing messages unchanged
+ * NEW — compensate ranking if later saga step fails
  *
- * Generated from protobuf message <code>matchmaking.UpdateRankingRequest</code>
+ * Generated from protobuf message <code>matchmaking.CompensateRankingRequest</code>
  */
-class UpdateRankingRequest extends \Google\Protobuf\Internal\Message
+class CompensateRankingRequest extends \Google\Protobuf\Internal\Message
 {
     /**
      * Generated from protobuf field <code>int32 winner_id = 1;</code>
@@ -24,9 +24,15 @@ class UpdateRankingRequest extends \Google\Protobuf\Internal\Message
      */
     protected $loser_id = 0;
     /**
-     * Generated from protobuf field <code>int32 match_id = 3;</code>
+     * the points BEFORE the match, we restore to this
+     *
+     * Generated from protobuf field <code>int32 winner_points = 3;</code>
      */
-    protected $match_id = 0;
+    protected $winner_points = 0;
+    /**
+     * Generated from protobuf field <code>int32 loser_points = 4;</code>
+     */
+    protected $loser_points = 0;
 
     /**
      * Constructor.
@@ -36,7 +42,9 @@ class UpdateRankingRequest extends \Google\Protobuf\Internal\Message
      *
      *     @type int $winner_id
      *     @type int $loser_id
-     *     @type int $match_id
+     *     @type int $winner_points
+     *           the points BEFORE the match, we restore to this
+     *     @type int $loser_points
      * }
      */
     public function __construct($data = NULL) {
@@ -89,23 +97,49 @@ class UpdateRankingRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>int32 match_id = 3;</code>
+     * the points BEFORE the match, we restore to this
+     *
+     * Generated from protobuf field <code>int32 winner_points = 3;</code>
      * @return int
      */
-    public function getMatchId()
+    public function getWinnerPoints()
     {
-        return $this->match_id;
+        return $this->winner_points;
     }
 
     /**
-     * Generated from protobuf field <code>int32 match_id = 3;</code>
+     * the points BEFORE the match, we restore to this
+     *
+     * Generated from protobuf field <code>int32 winner_points = 3;</code>
      * @param int $var
      * @return $this
      */
-    public function setMatchId($var)
+    public function setWinnerPoints($var)
     {
         GPBUtil::checkInt32($var);
-        $this->match_id = $var;
+        $this->winner_points = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>int32 loser_points = 4;</code>
+     * @return int
+     */
+    public function getLoserPoints()
+    {
+        return $this->loser_points;
+    }
+
+    /**
+     * Generated from protobuf field <code>int32 loser_points = 4;</code>
+     * @param int $var
+     * @return $this
+     */
+    public function setLoserPoints($var)
+    {
+        GPBUtil::checkInt32($var);
+        $this->loser_points = $var;
 
         return $this;
     }

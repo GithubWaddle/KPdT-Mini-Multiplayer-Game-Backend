@@ -76,6 +76,40 @@ async function updateRanking(call, callback) {
   }
 }
 
+// ── NEW: CompensateRanking — undo ranking update ─────────
+// Called by PHP saga orchestrator if a later step fails
+async function compensateRanking(call, callback) {
+  const { winnerId, loserId, winnerPoints, loserPoints } = call.request;
+  const connection = await writePool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // Restore to pre-match values
+    await connection.query(
+      'UPDATE rankings SET wins = wins - 1, points = ? WHERE user_id = ?',
+      [winnerPoints, winnerId]
+    );
+    await connection.query(
+      'UPDATE rankings SET losses = losses - 1, points = ? WHERE user_id = ?',
+      [loserPoints, loserId]
+    );
+
+    await connection.commit();
+
+    // Bust cache again since we changed values
+    await redisClient.del('ranking:leaderboard');
+
+    callback(null, { success: true, message: 'Ranking compensated (rolled back)' });
+
+  } catch (err) {
+    await connection.rollback();
+    callback(null, { success: false, message: 'Compensation failed: ' + err.message });
+  } finally {
+    connection.release();
+  }
+}
+
 // ── Implement GetPlayerRank ──────────────────────────────
 async function getPlayerRank(call, callback) {
   const { userId } = call.request;
@@ -121,6 +155,7 @@ async function main() {
   server.addService(matchmakingProto.RankingService.service, {
     UpdateRanking: updateRanking,
     GetPlayerRank: getPlayerRank,
+    CompensateRanking: compensateRanking, // NEW
   });
 
   server.bindAsync(

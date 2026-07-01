@@ -2,7 +2,7 @@
 
 echo "generating grpc files..."
 
-sudo docker exec laravel_app protoc \
+sudo docker exec laravel_app1 protoc \
 	--proto_path=grpc/protos \
 	--php_out=grpc/generated \
 	--grpc_out=grpc/generated \

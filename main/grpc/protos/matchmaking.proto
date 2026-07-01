@@ -3,15 +3,18 @@ syntax = "proto3";
 package matchmaking;
 
 service RankingService {
-    rpc UpdateRanking (UpdateRankingRequest) returns (UpdateRankingResponse);
-    rpc GetPlayerRank (GetPlayerRankRequest) returns (GetPlayerRankResponse);
+    rpc UpdateRanking          (UpdateRankingRequest)          returns (UpdateRankingResponse);
+    rpc GetPlayerRank          (GetPlayerRankRequest)          returns (GetPlayerRankResponse);
+    rpc CompensateRanking      (CompensateRankingRequest)      returns (CompensateRankingResponse); // NEW
 }
 
-// NEW — User service contract
 service UserService {
-    rpc ValidatePlayer (ValidatePlayerRequest) returns (ValidatePlayerResponse);
+    rpc ValidatePlayer         (ValidatePlayerRequest)         returns (ValidatePlayerResponse);
+    rpc UpdateUserScore        (UpdateUserScoreRequest)        returns (UpdateUserScoreResponse);   // NEW
+    rpc CompensateUserScore    (CompensateUserScoreRequest)    returns (CompensateUserScoreResponse); // NEW
 }
 
+// existing messages unchanged
 message UpdateRankingRequest {
     int32 winner_id = 1;
     int32 loser_id  = 2;
@@ -38,7 +41,6 @@ message GetPlayerRankResponse {
     float  win_rate = 6;
 }
 
-// NEW messages
 message ValidatePlayerRequest {
     int32 user_id = 1;
 }
@@ -47,4 +49,40 @@ message ValidatePlayerResponse {
     bool   exists = 1;
     string name   = 2;
     int32  score  = 3;
+}
+
+// NEW — compensate ranking if later saga step fails
+message CompensateRankingRequest {
+    int32 winner_id      = 1;
+    int32 loser_id       = 2;
+    int32 winner_points  = 3;  // the points BEFORE the match, we restore to this
+    int32 loser_points   = 4;
+}
+
+message CompensateRankingResponse {
+    bool   success = 1;
+    string message = 2;
+}
+
+// NEW — update user score after match
+message UpdateUserScoreRequest {
+    int32 user_id   = 1;
+    int32 new_score = 2;
+}
+
+message UpdateUserScoreResponse {
+    bool   success    = 1;
+    string message    = 2;
+    int32  prev_score = 3;  // return old score so we can compensate if needed
+}
+
+// NEW — undo score update
+message CompensateUserScoreRequest {
+    int32 user_id    = 1;
+    int32 prev_score = 2;
+}
+
+message CompensateUserScoreResponse {
+    bool   success = 1;
+    string message = 2;
 }

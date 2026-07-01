@@ -38,11 +38,55 @@ async function validatePlayer(call, callback) {
   }
 }
 
+// ── NEW: UpdateUserScore ─────────────────────────────────
+async function updateUserScore(call, callback) {
+  const { userId, newScore } = call.request;
+
+  try {
+    const [[user]] = await writePool.query(
+      'SELECT score FROM users WHERE id = ?', [userId]
+    );
+
+    if (!user) {
+      return callback(null, { success: false, message: 'User not found', prevScore: 0 });
+    }
+
+    const prevScore = user.score;
+
+    await writePool.query(
+      'UPDATE users SET score = ? WHERE id = ?', [newScore, userId]
+    );
+
+    callback(null, { success: true, message: 'Score updated', prevScore });
+
+  } catch (err) {
+    callback({ code: grpc.status.INTERNAL, message: err.message });
+  }
+}
+
+// ── NEW: CompensateUserScore — restore previous score ────
+async function compensateUserScore(call, callback) {
+  const { userId, prevScore } = call.request;
+
+  try {
+    await writePool.query(
+      'UPDATE users SET score = ? WHERE id = ?', [prevScore, userId]
+    );
+
+    callback(null, { success: true, message: 'Score compensated (restored)' });
+
+  } catch (err) {
+    callback({ code: grpc.status.INTERNAL, message: err.message });
+  }
+}
+
 function main() {
   const server = new grpc.Server();
 
   server.addService(matchmakingProto.UserService.service, {
     ValidatePlayer: validatePlayer,
+    UpdateUserScore: updateUserScore,     // NEW
+    CompensateUserScore: compensateUserScore, // NEW
   });
 
   server.bindAsync(
