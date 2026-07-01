@@ -105,6 +105,35 @@ services:
     networks:
       - game_network
 
+  raft_node_1:
+    build:
+      context: ./grpc
+      dockerfile: node-servers/Dockerfile
+    container_name: raft_node_1
+    command: node raft/node1.js
+    restart: unless-stopped
+    networks:
+      - game_network
+
+  raft_node_2:
+    build:
+      context: ./grpc
+      dockerfile: node-servers/Dockerfile
+    container_name: raft_node_2
+    command: node raft/node2.js
+    restart: unless-stopped
+    networks:
+      - game_network
+
+  raft_node_3:
+    build:
+      context: ./grpc
+      dockerfile: node-servers/Dockerfile
+    container_name: raft_node_3
+    command: node raft/node3.js
+    restart: unless-stopped
+    networks:
+      - game_network
 
   nginx:
     image: nginx:alpine

@@ -6,6 +6,7 @@ use App\Http\Controllers\MatchmakingController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\RankingController;
 use App\Http\Controllers\UserController;
+use App\Services\RaftService;
 
 // ── Public routes ─────────────────────────────────────
 Route::prefix('auth')->group(function () {
@@ -55,5 +56,18 @@ Route::get('/debug/which-server', function () {
     return response()->json([
         'hostname' => gethostname(), // returns container ID, different per container
         'time'     => now(),
+    ]);
+});
+
+// Public — so you can show the professor without needing a token
+Route::get('/consensus/status', function () {
+    $raft     = new RaftService();
+    $statuses = $raft->getLeaderStatus();
+    $leader   = $raft->getLeader();
+
+    return response()->json([
+        'status'       => 'success',
+        'current_leader' => $leader,
+        'nodes'        => $statuses,
     ]);
 });
